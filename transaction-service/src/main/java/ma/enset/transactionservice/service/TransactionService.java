@@ -2,6 +2,7 @@ package ma.enset.transactionservice.service;
 
 import lombok.RequiredArgsConstructor;
 import ma.enset.transactionservice.entities.BankTransaction;
+import ma.enset.transactionservice.events.TransactionEventPublisher;
 import ma.enset.transactionservice.models.Account;
 import ma.enset.transactionservice.models.CreateTransactionRequest;
 import ma.enset.transactionservice.models.DebitRequest;
@@ -21,6 +22,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final AccountGateway accountGateway;
+    private final TransactionEventPublisher transactionEventPublisher;
 
     @Value("${bank.transaction.max-amount:1000}")
     private BigDecimal maxAmount;
@@ -74,7 +76,9 @@ public class TransactionService {
         transaction.setMerchantCategory(request.merchantCategory());
         transaction.setCountry(request.country());
 
-        return transactionRepository.save(transaction);
+        BankTransaction savedTransaction = transactionRepository.save(transaction);
+        transactionEventPublisher.publish(savedTransaction);
+        return savedTransaction;
     }
 
     private void validateRequest(CreateTransactionRequest request) {

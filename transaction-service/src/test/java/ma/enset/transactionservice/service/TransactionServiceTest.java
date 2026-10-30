@@ -1,6 +1,7 @@
 package ma.enset.transactionservice.service;
 
 import ma.enset.transactionservice.entities.BankTransaction;
+import ma.enset.transactionservice.events.TransactionEventPublisher;
 import ma.enset.transactionservice.models.Account;
 import ma.enset.transactionservice.models.CreateTransactionRequest;
 import ma.enset.transactionservice.repositories.TransactionRepository;
@@ -14,6 +15,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,11 +34,17 @@ class TransactionServiceTest {
     @Mock
     private AccountGateway accountGateway;
 
+    @Mock
+    private TransactionEventPublisher transactionEventPublisher;
+
     private TransactionService transactionService;
 
     @BeforeEach
     void setUp() {
-        transactionService = new TransactionService(transactionRepository, accountGateway);
+        transactionService = new TransactionService(
+                transactionRepository,
+                accountGateway,
+                transactionEventPublisher);
         ReflectionTestUtils.setField(
                 transactionService, "maxAmount", new BigDecimal("1000"));
     }
@@ -48,7 +56,12 @@ class TransactionServiceTest {
         when(accountGateway.getAccount(accountId)).thenReturn(
                 account(accountId, "ACTIVE", "MAD", 5000));
         when(transactionRepository.save(any(BankTransaction.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+                .thenAnswer(invocation -> {
+                    BankTransaction transaction = invocation.getArgument(0);
+                    transaction.setId(UUID.randomUUID());
+                    transaction.setCreatedAt(Instant.now());
+                    return transaction;
+                });
 
         BankTransaction result = transactionService.createTransaction(request);
 
@@ -61,6 +74,7 @@ class TransactionServiceTest {
                 ArgumentCaptor.forClass(BankTransaction.class);
         verify(transactionRepository).save(transactionCaptor.capture());
         assertEquals("MAD", transactionCaptor.getValue().getCurrency());
+        verify(transactionEventPublisher).publish(result);
     }
 
     @Test
@@ -73,6 +87,7 @@ class TransactionServiceTest {
 
         verify(accountGateway, never()).getAccount(any());
         verify(transactionRepository, never()).save(any());
+        verify(transactionEventPublisher, never()).publish(any());
     }
 
     @Test
@@ -87,6 +102,7 @@ class TransactionServiceTest {
 
         verify(accountGateway, never()).debitAccount(any(), any());
         verify(transactionRepository, never()).save(any());
+        verify(transactionEventPublisher, never()).publish(any());
     }
 
     private CreateTransactionRequest request(
