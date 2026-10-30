@@ -4,64 +4,110 @@
   <header>
     <div>
       <h1>ADRIA Banking</h1>
-      <p>Gestion des comptes bancaires</p>
+      <p>Gestion des comptes et des transactions</p>
     </div>
-    <button (click)="loadAccounts()">Actualiser</button>
+    <button (click)="refresh()">Actualiser</button>
   </header>
 
-  <section class="stats">
-    <div class="card">
-      <p>Total comptes</p>
-      <h2>{{ accounts().length }}</h2>
-    </div>
+  <nav>
+    <button
+      [class.selected]="selectedView() === 'accounts'"
+      (click)="showAccounts()">Comptes</button>
+    <button
+      [class.selected]="selectedView() === 'transactions'"
+      (click)="showTransactions()">Transactions</button>
+  </nav>
 
-    <div class="card">
-      <p>Comptes actifs</p>
-      <h2>{{ activeCount() }}</h2>
-    </div>
+  @if (selectedView() === 'accounts') {
+    <section class="stats">
+      <div class="card">
+        <p>Total comptes</p>
+        <h2>{{ accounts().length }}</h2>
+      </div>
 
-    <div class="card">
-      <p>Comptes bloqués</p>
-      <h2>{{ blockedCount() }}</h2>
-    </div>
-  </section>
+      <div class="card">
+        <p>Comptes actifs</p>
+        <h2>{{ activeCount() }}</h2>
+      </div>
 
-  <section class="card">
-    <h2>Liste des comptes</h2>
+      <div class="card">
+        <p>Comptes bloqués</p>
+        <h2>{{ blockedCount() }}</h2>
+      </div>
+    </section>
 
-    @if (loading()) {
-      <p>Chargement des comptes...</p>
-    } @else if (error()) {
-      <p class="error">{{ error() }}</p>
-    } @else {
-      <table>
-        <thead>
-        <tr>
-          <th>Client</th>
-          <th>Devise</th>
-          <th>Solde</th>
-          <th>Statut</th>
-        </tr>
-        </thead>
-        <tbody>
-          @for (account of accounts(); track account.id) {
-            <tr>
-              <td>{{ account.customerReference }}</td>
-              <td>{{ account.currency }}</td>
-              <td>{{ account.balance }}</td>
-              <td>
-                <span [class.active]="account.status === 'ACTIVE'"
-                      [class.blocked]="account.status === 'BLOCKED'">
-                  {{ account.status }}
-                </span>
-              </td>
-            </tr>
-          } @empty {
-            <tr><td colspan="4">Aucun compte trouvé.</td></tr>
-          }
-        </tbody>
-      </table>
-    }
-  </section>
+    <section class="card">
+      <h2>Liste des comptes</h2>
+
+      @if (loading()) {
+        <p>Chargement des comptes...</p>
+      } @else if (error()) {
+        <p class="error">{{ error() }}</p>
+      } @else {
+        <table>
+          <thead>
+          <tr>
+            <th>Client</th>
+            <th>Devise</th>
+            <th>Solde</th>
+            <th>Statut</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (account of accounts(); track account.id) {
+              <tr>
+                <td>{{ account.customerReference }}</td>
+                <td>{{ account.currency }}</td>
+                <td>{{ account.balance }}</td>
+                <td>
+                  <span [class.active]="account.status === 'ACTIVE'"
+                        [class.blocked]="account.status === 'BLOCKED'">
+                    {{ account.status }}
+                  </span>
+                </td>
+              </tr>
+            } @empty {
+              <tr><td colspan="4">Aucun compte trouvé.</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  } @else {
+    <section class="card">
+      <h2>Liste des transactions</h2>
+
+      @if (loading()) {
+        <p>Chargement des transactions...</p>
+      } @else if (error()) {
+        <p class="error">{{ error() }}</p>
+      } @else {
+        <table>
+          <thead>
+          <tr>
+            <th>Compte</th>
+            <th>Montant</th>
+            <th>Catégorie</th>
+            <th>Pays</th>
+            <th>Date</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (transaction of transactions(); track transaction.id) {
+              <tr>
+                <td title="{{ transaction.accountId }}">{{ shortId(transaction.accountId) }}...</td>
+                <td class="amount">{{ transaction.amount }} {{ transaction.currency }}</td>
+                <td>{{ transaction.merchantCategory }}</td>
+                <td>{{ transaction.country }}</td>
+                <td>{{ transaction.createdAt }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5">Aucune transaction trouvée.</td></tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  }
 
 </div>

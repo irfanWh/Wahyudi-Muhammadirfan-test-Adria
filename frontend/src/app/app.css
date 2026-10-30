@@ -32,6 +32,24 @@ button {
   cursor: pointer;
 }
 
+nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+nav button {
+  background: white;
+  color: #1658b8;
+  border: 1px solid #cbd5e1;
+}
+
+nav button.selected {
+  background: #1658b8;
+  color: white;
+  border-color: #1658b8;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -65,6 +83,7 @@ th { background: #f8fafc; }
 
 .active { color: #15803d; font-weight: bold; }
 .blocked, .error { color: #dc2626; font-weight: bold; }
+.amount { font-weight: bold; }
 
 @media (max-width: 650px) {
   .stats { grid-template-columns: 1fr; }

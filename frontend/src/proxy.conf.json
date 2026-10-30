@@ -3,5 +3,10 @@
     "target": "http://localhost:8081",
     "secure": false,
     "changeOrigin": true
+  },
+  "/transactions": {
+    "target": "http://localhost:8082",
+    "secure": false,
+    "changeOrigin": true
   }
 }
