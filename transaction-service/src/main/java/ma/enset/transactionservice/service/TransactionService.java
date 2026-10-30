@@ -18,6 +18,11 @@ import feign.FeignException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import feign.FeignException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
@@ -25,17 +30,25 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
     private final AccountRestClient accountRestClient;
 
+    @CircuitBreaker(name = "accountService", fallbackMethod = "accountFallback")
     public Account getAccountInfo(UUID accountId) {
-        try {
-            return accountRestClient.getAccountById(accountId);
-        } catch (FeignException.NotFound e) {
+        return accountRestClient.getAccountById(accountId);
+    }
+
+    private Account accountFallback(UUID accountId, Throwable exception) {
+
+        if (exception instanceof FeignException.NotFound) {
             throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND, "Compte introuvable");
-        } catch (FeignException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_GATEWAY,
-                    "Erreur de communication avec Account Service", e);
+                    HttpStatus.NOT_FOUND,
+                    "Compte introuvable"
+            );
         }
+
+        throw new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Account Service est indisponible",
+                exception
+        );
     }
 
     public List<BankTransaction> getAllTransactions() {
