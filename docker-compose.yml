@@ -1,0 +1,87 @@
+name: adria-banking
+
+services:
+  kafka:
+    image: apache/kafka:4.0.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    ports:
+      - "9092:9092"
+
+  config-service:
+    build: ./config-service
+    image: adria/config-service:local
+    ports:
+      - "8888:8888"
+
+  discovery-service:
+    build: ./discovery-service
+    image: adria/discovery-service:local
+    ports:
+      - "8761:8761"
+
+  account-service:
+    build: ./account-service
+    image: adria/account-service:local
+    depends_on:
+      - config-service
+      - discovery-service
+    ports:
+      - "8081:8081"
+
+  transaction-service:
+    build: ./transaction-service
+    image: adria/transaction-service:local
+    depends_on:
+      - account-service
+      - config-service
+      - kafka
+    environment:
+      CONFIG_SERVER_URL: http://config-service:8888
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8082:8082"
+
+  gateway-service:
+    build: ./gateway-service
+    image: adria/gateway-service:local
+    depends_on:
+      - account-service
+      - transaction-service
+    environment:
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      TRANSACTION_SERVICE_URL: http://transaction-service:8082
+    ports:
+      - "8080:8080"
+
+  ai-service:
+    build: ./ai-service
+    image: adria/ai-service:local
+    depends_on:
+      - account-service
+      - transaction-service
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-change-me}
+      ACCOUNT_SERVICE_URL: http://account-service:8081
+      TRANSACTION_SERVICE_URL: http://transaction-service:8082
+    ports:
+      - "8083:8083"
+
+  notification-service:
+    build: ./notification-service
+    image: adria/notification-service:local
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
