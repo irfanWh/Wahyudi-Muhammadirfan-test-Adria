@@ -11,11 +11,32 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.UUID;
 
+import ma.enset.transactionservice.clients.AccountRestClient;
+import ma.enset.transactionservice.models.Account;
+import feign.FeignException;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final AccountRestClient accountRestClient;
+
+    public Account getAccountInfo(UUID accountId) {
+        try {
+            return accountRestClient.getAccountById(accountId);
+        } catch (FeignException.NotFound e) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Compte introuvable");
+        } catch (FeignException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Erreur de communication avec Account Service", e);
+        }
+    }
 
     public List<BankTransaction> getAllTransactions() {
         return transactionRepository.findAll();

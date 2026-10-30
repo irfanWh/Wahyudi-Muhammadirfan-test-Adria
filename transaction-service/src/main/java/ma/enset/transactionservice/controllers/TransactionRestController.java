@@ -6,6 +6,8 @@ import ma.enset.transactionservice.service.TransactionService;
 
 import org.springframework.web.bind.annotation.*;
 
+import ma.enset.transactionservice.models.Account;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -15,6 +17,11 @@ import java.util.UUID;
 public class TransactionRestController {
 
     private final TransactionService transactionService;
+
+    @GetMapping("/check-account/{accountId}")
+    public Account checkAccount(@PathVariable UUID accountId) {
+        return transactionService.getAccountInfo(accountId);
+    }
 
     @GetMapping
     public List<BankTransaction> getAllTransactions() {
