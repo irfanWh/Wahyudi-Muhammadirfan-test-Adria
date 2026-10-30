@@ -74,6 +74,79 @@
       }
     </section>
   } @else {
+    <section class="card form-card">
+      <h2>Nouvelle transaction</h2>
+
+      <form (ngSubmit)="createTransaction()">
+        <label>
+          Compte actif
+          <select
+            name="accountId"
+            [(ngModel)]="transactionForm.accountId"
+            (change)="onAccountChange()"
+            required>
+            <option value="">Sélectionner un compte</option>
+            @for (account of activeAccounts(); track account.id) {
+              <option [value]="account.id">
+                {{ account.customerReference }} — {{ account.balance }} {{ account.currency }}
+              </option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Montant
+          <input
+            name="amount"
+            type="number"
+            min="0.01"
+            max="1000"
+            step="0.01"
+            [(ngModel)]="transactionForm.amount"
+            required>
+        </label>
+
+        <label>
+          Devise
+          <input
+            name="currency"
+            [value]="transactionForm.currency"
+            readonly>
+        </label>
+
+        <label>
+          Catégorie
+          <select name="merchantCategory" [(ngModel)]="transactionForm.merchantCategory">
+            <option value="SHOPPING">SHOPPING</option>
+            <option value="RESTAURANT">RESTAURANT</option>
+            <option value="TRANSPORT">TRANSPORT</option>
+            <option value="HOTEL">HOTEL</option>
+            <option value="ONLINE">ONLINE</option>
+          </select>
+        </label>
+
+        <label>
+          Pays
+          <input
+            name="country"
+            maxlength="2"
+            [(ngModel)]="transactionForm.country"
+            required>
+        </label>
+
+        <button type="submit" [disabled]="creating()">
+          {{ creating() ? 'Enregistrement...' : 'Enregistrer' }}
+        </button>
+      </form>
+
+      @if (formError()) {
+        <p class="error">{{ formError() }}</p>
+      }
+      @if (success()) {
+        <p class="success">{{ success() }}</p>
+      }
+    </section>
+
     <section class="card">
       <h2>Liste des transactions</h2>
 

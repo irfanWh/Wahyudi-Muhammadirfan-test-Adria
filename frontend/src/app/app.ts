@@ -1,6 +1,7 @@
 
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 interface Account {
   id: string;
@@ -22,6 +23,7 @@ interface BankTransaction {
 
 @Component({
   selector: 'app-root',
+  imports: [FormsModule],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -34,6 +36,17 @@ export class App implements OnInit {
   selectedView = signal<'accounts' | 'transactions'>('accounts');
   loading = signal(true);
   error = signal('');
+  creating = signal(false);
+  formError = signal('');
+  success = signal('');
+
+  transactionForm = {
+    accountId: '',
+    amount: null as number | null,
+    currency: '',
+    merchantCategory: 'SHOPPING',
+    country: 'MA'
+  };
 
   activeCount = computed(() =>
     this.accounts().filter(a => a.status === 'ACTIVE').length
@@ -41,6 +54,10 @@ export class App implements OnInit {
 
   blockedCount = computed(() =>
     this.accounts().filter(a => a.status === 'BLOCKED').length
+  );
+
+  activeAccounts = computed(() =>
+    this.accounts().filter(a => a.status === 'ACTIVE')
   );
 
   ngOnInit() {
@@ -96,5 +113,46 @@ export class App implements OnInit {
 
   shortId(id: string) {
     return id.substring(0, 8);
+  }
+
+  onAccountChange() {
+    const account = this.accounts().find(
+      item => item.id === this.transactionForm.accountId
+    );
+    this.transactionForm.currency = account?.currency ?? '';
+  }
+
+  createTransaction() {
+    this.formError.set('');
+    this.success.set('');
+
+    if (!this.transactionForm.accountId
+      || !this.transactionForm.amount
+      || this.transactionForm.amount <= 0
+      || this.transactionForm.amount > 1000) {
+      this.formError.set('Choisissez un compte et un montant entre 0 et 1000.');
+      return;
+    }
+
+    this.creating.set(true);
+    this.http.post<BankTransaction>('/transactions', this.transactionForm).subscribe({
+      next: () => {
+        this.creating.set(false);
+        this.success.set('Transaction enregistrée avec succès.');
+        this.transactionForm.amount = null;
+        this.loadTransactions();
+        this.loadAccountsInBackground();
+      },
+      error: () => {
+        this.creating.set(false);
+        this.formError.set('Transaction refusée. Vérifiez le compte et le solde.');
+      }
+    });
+  }
+
+  private loadAccountsInBackground() {
+    this.http.get<Account[]>('/accounts').subscribe({
+      next: data => this.accounts.set(data)
+    });
   }
 }
