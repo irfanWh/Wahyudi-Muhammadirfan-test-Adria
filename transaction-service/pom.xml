@@ -48,11 +48,6 @@
             <artifactId>spring-boot-starter-aspectj</artifactId>
         </dependency>
 
-        <!-- Monitoring -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
         <!-- Swagger UI / OpenAPI -->
         <dependency>
             <groupId>org.springdoc</groupId>

@@ -2,8 +2,10 @@ package ma.enset.transactionservice.controllers;
 
 import lombok.RequiredArgsConstructor;
 import ma.enset.transactionservice.entities.BankTransaction;
+import ma.enset.transactionservice.models.CreateTransactionRequest;
 import ma.enset.transactionservice.service.TransactionService;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import ma.enset.transactionservice.models.Account;
@@ -37,5 +39,12 @@ public class TransactionRestController {
     public List<BankTransaction> getTransactionsByAccount(
             @PathVariable UUID accountId) {
         return transactionService.getTransactionsByAccount(accountId);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public BankTransaction createTransaction(
+            @RequestBody CreateTransactionRequest request) {
+        return transactionService.createTransaction(request);
     }
 }

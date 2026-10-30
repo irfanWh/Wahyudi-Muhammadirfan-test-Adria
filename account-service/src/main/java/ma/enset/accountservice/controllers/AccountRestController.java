@@ -2,6 +2,7 @@ package ma.enset.accountservice.controllers;
 
 import lombok.RequiredArgsConstructor;
 import ma.enset.accountservice.entities.Account;
+import ma.enset.accountservice.models.DebitRequest;
 import ma.enset.accountservice.service.AccountService;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,5 +29,12 @@ public class AccountRestController {
     @PostMapping
     public Account saveAccount(@RequestBody Account account) {
         return accountService.saveAccount(account);
+    }
+
+    @PostMapping("/{id}/debit")
+    public Account debitAccount(
+            @PathVariable UUID id,
+            @RequestBody DebitRequest request) {
+        return accountService.debitAccount(id, request);
     }
 }
